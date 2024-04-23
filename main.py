@@ -21,7 +21,7 @@ def predict(image):
 
     return pil_image
 
-with gr.Blocks() as demo:
+with gr.Blocks(css='footer {visibility: hidden}') as demo:
     with gr.Row():
         input_image = gr.Image(type='pil', label='Input Image')
         output_image = gr.Image(type='pil', label='Output Image')
