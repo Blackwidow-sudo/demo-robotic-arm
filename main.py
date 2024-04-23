@@ -26,10 +26,11 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
         input_image = gr.Image(type='pil', label='Input Image')
         output_image = gr.Image(type='pil', label='Output Image')
 
-    button_clear = gr.Button(value='Clear')
-    button_clear.click(fn=clear)
+    with gr.Row():
+        button_clear = gr.Button(value='Clear')
+        button_submit = gr.Button(value='Submit')
 
-    button_submit = gr.Button(value='Submit')
+    button_clear.click(fn=clear)
     button_submit.click(fn=predict, inputs=[input_image], outputs=[output_image])
 
 if __name__ == '__main__':
