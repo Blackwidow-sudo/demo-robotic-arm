@@ -3,12 +3,12 @@ import torch
 from PIL import Image
 from ultralytics import YOLO
 
-MODEL_NAME = 'drogerie_8_yolov8s-seg_8k_v1.pt'
+import config
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def predict(image):
-    model = YOLO(MODEL_NAME).to(device)
+    model = YOLO(config.get('MODEL_NAME')).to(device)
     results = model.predict(image)
 
     for r in results:
