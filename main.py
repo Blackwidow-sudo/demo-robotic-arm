@@ -25,7 +25,7 @@ def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom
 
 with gr.Blocks(css='footer {visibility: hidden}') as demo:
     with gr.Row():
-        input_image = gr.Image(type='pil', label='Input Image')
+        input_image = gr.Image(type='pil', label='Input Image', sources=['webcam'])
         output_image = gr.Image(type='pil', label='Output Image')
 
     with gr.Accordion('Calibration', open=False):
