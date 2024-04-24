@@ -1,5 +1,7 @@
 import config
+import cv2 as cv
 import gradio as gr
+import numpy as np
 import torch
 from PIL import Image, ImageDraw
 from ultralytics import YOLO
@@ -21,7 +23,13 @@ def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom
     draw.line([(right_bottom_x, right_bottom_y), (left_bottom_x, left_bottom_y)], fill='red', width=2)
     draw.line([(left_bottom_x, left_bottom_y), (left_top_x, left_top_y)], fill='red', width=2)
 
-    return pil_image, [left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height]
+    source_points = np.array([[left_top_x, left_top_y], [right_top_x, right_top_y], [right_bottom_x, right_bottom_y], [left_bottom_x, left_bottom_y]])
+    destination_points = np.array([[0, 0], [width, 0], [width, height], [0, height]])
+
+    matrix = cv.getPerspectiveTransform(source_points.astype(np.float32), destination_points.astype(np.float32))
+    warped_image = cv.warpPerspective(np.array(pil_image), matrix, (width, height))
+
+    return warped_image, [left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height]
 
 with gr.Blocks(css='footer {visibility: hidden}') as demo:
     with gr.Row():
