@@ -52,5 +52,9 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
                 gr.Number(label='Right-Bottom X', value=0)
                 gr.Number(label='Right-Bottom Y', value=0)
 
+        with gr.Row():
+            gr.Number(label='Width', value=0)
+            gr.Number(label='Height', value=0)
+
 if __name__ == '__main__':
     demo.queue().launch(root_path='/video')
