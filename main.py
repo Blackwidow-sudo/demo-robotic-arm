@@ -1,5 +1,7 @@
 import config
+import cv2 as cv
 import gradio as gr
+import numpy as np
 import torch
 from PIL import Image, ImageDraw
 from ultralytics import YOLO
@@ -14,14 +16,21 @@ def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom
         image_array = r.plot(boxes=True)
         pil_image = Image.fromarray(image_array[..., ::-1])
 
-    draw = ImageDraw.Draw(pil_image)
+    if config.get_bool('DRAW_CALIBRATION'):
+        draw = ImageDraw.Draw(pil_image)
 
-    draw.line([(left_top_x, left_top_y), (right_top_x, right_top_y)], fill='red', width=2)
-    draw.line([(right_top_x, right_top_y), (right_bottom_x, right_bottom_y)], fill='red', width=2)
-    draw.line([(right_bottom_x, right_bottom_y), (left_bottom_x, left_bottom_y)], fill='red', width=2)
-    draw.line([(left_bottom_x, left_bottom_y), (left_top_x, left_top_y)], fill='red', width=2)
+        draw.line([(left_top_x, left_top_y), (right_top_x, right_top_y)], fill='red', width=2)
+        draw.line([(right_top_x, right_top_y), (right_bottom_x, right_bottom_y)], fill='red', width=2)
+        draw.line([(right_bottom_x, right_bottom_y), (left_bottom_x, left_bottom_y)], fill='red', width=2)
+        draw.line([(left_bottom_x, left_bottom_y), (left_top_x, left_top_y)], fill='red', width=2)
 
-    return pil_image, [left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height]
+    source_points = np.array([[left_top_x, left_top_y], [right_top_x, right_top_y], [right_bottom_x, right_bottom_y], [left_bottom_x, left_bottom_y]])
+    destination_points = np.array([[0, 0], [width, 0], [width, height], [0, height]])
+
+    matrix = cv.getPerspectiveTransform(source_points.astype(np.float32), destination_points.astype(np.float32))
+    warped_image = cv.warpPerspective(np.array(pil_image), matrix, (width, height))
+
+    return warped_image if config.get_bool('OUTPUT_WARPED') else pil_image, [left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height]
 
 with gr.Blocks(css='footer {visibility: hidden}') as demo:
     with gr.Row():
@@ -31,25 +40,25 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
     with gr.Accordion('Calibration', open=False):
         with gr.Row():
             with gr.Row():
-                left_top_x = gr.Number(label='Left-Top X', value=config.get('CALIBRATION_LEFT_TOP_X', int))
-                left_top_y = gr.Number(label='Left-Top Y', value=config.get('CALIBRATION_LEFT_TOP_Y', int))
+                left_top_x = gr.Number(label='Left-Top X', value=config.get_as('CALIBRATION_LEFT_TOP_X', int))
+                left_top_y = gr.Number(label='Left-Top Y', value=config.get_as('CALIBRATION_LEFT_TOP_Y', int))
 
             with gr.Row():
-                right_top_x = gr.Number(label='Right-Top X', value=config.get('CALIBRATION_RIGHT_TOP_X', int))
-                right_top_y = gr.Number(label='Right-Top Y', value=config.get('CALIBRATION_RIGHT_TOP_Y', int))
+                right_top_x = gr.Number(label='Right-Top X', value=config.get_as('CALIBRATION_RIGHT_TOP_X', int))
+                right_top_y = gr.Number(label='Right-Top Y', value=config.get_as('CALIBRATION_RIGHT_TOP_Y', int))
 
         with gr.Row():
             with gr.Row():
-                left_bottom_x = gr.Number(label='Left-Bottom X', value=config.get('CALIBRATION_LEFT_BOTTOM_X', int))
-                left_bottom_y = gr.Number(label='Left-Bottom Y', value=config.get('CALIBRATION_LEFT_BOTTOM_Y', int))
+                left_bottom_x = gr.Number(label='Left-Bottom X', value=config.get_as('CALIBRATION_LEFT_BOTTOM_X', int))
+                left_bottom_y = gr.Number(label='Left-Bottom Y', value=config.get_as('CALIBRATION_LEFT_BOTTOM_Y', int))
 
             with gr.Row():
-                right_bottom_x = gr.Number(label='Right-Bottom X', value=config.get('CALIBRATION_RIGHT_BOTTOM_X', int))
-                right_bottom_y = gr.Number(label='Right-Bottom Y', value=config.get('CALIBRATION_RIGHT_BOTTOM_Y', int))
+                right_bottom_x = gr.Number(label='Right-Bottom X', value=config.get_as('CALIBRATION_RIGHT_BOTTOM_X', int))
+                right_bottom_y = gr.Number(label='Right-Bottom Y', value=config.get_as('CALIBRATION_RIGHT_BOTTOM_Y', int))
 
         with gr.Row():
-            width = gr.Number(label='Width', value=config.get('CALIBRATION_WIDTH', int))
-            height = gr.Number(label='Height', value=config.get('CALIBRATION_HEIGHT', int))
+            width = gr.Number(label='Width', value=config.get_as('CALIBRATION_WIDTH', int))
+            height = gr.Number(label='Height', value=config.get_as('CALIBRATION_HEIGHT', int))
 
         output_text = gr.Textbox(label='Output Text')
 
