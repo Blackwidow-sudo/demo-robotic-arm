@@ -20,7 +20,10 @@ def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom
 
     draw = ImageDraw.Draw(pil_image)
 
-    draw.rectangle(((left_top_x, left_top_y), (right_bottom_x, right_bottom_y)), outline='red', width=2)
+    draw.line([(left_top_x, left_top_y), (right_top_x, right_top_y)], fill='red', width=2)
+    draw.line([(right_top_x, right_top_y), (right_bottom_x, right_bottom_y)], fill='red', width=2)
+    draw.line([(right_bottom_x, right_bottom_y), (left_bottom_x, left_bottom_y)], fill='red', width=2)
+    draw.line([(left_bottom_x, left_bottom_y), (left_top_x, left_top_y)], fill='red', width=2)
 
     return pil_image, [left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height]
 
