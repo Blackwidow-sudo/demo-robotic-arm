@@ -33,5 +33,14 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
     button_clear.click(fn=clear)
     button_submit.click(fn=predict, inputs=[input_image], outputs=[output_image])
 
+    with gr.Accordion('Calibration', open=False):
+        with gr.Row():
+            gr.Number(label='Marker Left-Top', value=0)
+            gr.Number(label='Marker Right-Top', value=0)
+
+        with gr.Row():
+            gr.Number(label='Marker Left-Bottom', value=0)
+            gr.Number(label='Marker Right-Bottom', value=0)
+
 if __name__ == '__main__':
     demo.queue().launch(root_path='/video')
