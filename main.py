@@ -31,21 +31,21 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
     with gr.Accordion('Calibration', open=False):
         with gr.Row():
             with gr.Row():
-                left_top_x = gr.Number(label='Left-Top X', value=config.get('CALIBRATION_LEFT_TOP_X'))
-                left_top_y = gr.Number(label='Left-Top Y', value=config.get('CALIBRATION_LEFT_TOP_Y'))
+                left_top_x = gr.Number(label='Left-Top X', value=int(config.get('CALIBRATION_LEFT_TOP_X')))
+                left_top_y = gr.Number(label='Left-Top Y', value=int(config.get('CALIBRATION_LEFT_TOP_Y')))
 
             with gr.Row():
-                right_top_x = gr.Number(label='Right-Top X', value=config.get('CALIBRATION_RIGHT_TOP_X'))
-                right_top_y = gr.Number(label='Right-Top Y', value=config.get('CALIBRATION_RIGHT_TOP_Y'))
+                right_top_x = gr.Number(label='Right-Top X', value=int(config.get('CALIBRATION_RIGHT_TOP_X')))
+                right_top_y = gr.Number(label='Right-Top Y', value=int(config.get('CALIBRATION_RIGHT_TOP_Y')))
 
         with gr.Row():
             with gr.Row():
-                left_bottom_x = gr.Number(label='Left-Bottom X', value=config.get('CALIBRATION_LEFT_BOTTOM_X'))
-                left_bottom_y = gr.Number(label='Left-Bottom Y', value=config.get('CALIBRATION_LEFT_BOTTOM_Y'))
+                left_bottom_x = gr.Number(label='Left-Bottom X', value=int(config.get('CALIBRATION_LEFT_BOTTOM_X')))
+                left_bottom_y = gr.Number(label='Left-Bottom Y', value=int(config.get('CALIBRATION_LEFT_BOTTOM_Y')))
 
             with gr.Row():
-                right_bottom_x = gr.Number(label='Right-Bottom X', value=config.get('CALIBRATION_RIGHT_BOTTOM_X'))
-                right_bottom_y = gr.Number(label='Right-Bottom Y', value=config.get('CALIBRATION_RIGHT_BOTTOM_Y'))
+                right_bottom_x = gr.Number(label='Right-Bottom X', value=int(config.get('CALIBRATION_RIGHT_BOTTOM_X')))
+                right_bottom_y = gr.Number(label='Right-Bottom Y', value=int(config.get('CALIBRATION_RIGHT_BOTTOM_Y')))
 
         with gr.Row():
             width = gr.Number(label='Width', value=0)
