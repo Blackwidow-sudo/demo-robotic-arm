@@ -32,21 +32,21 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
     with gr.Accordion('Calibration', open=False):
         with gr.Row():
             with gr.Row():
-                left_top_x = gr.Number(label='Left-Top X', value=0)
-                left_top_y = gr.Number(label='Left-Top Y', value=0)
+                left_top_x = gr.Number(label='Left-Top X', value=10)
+                left_top_y = gr.Number(label='Left-Top Y', value=10)
 
             with gr.Row():
-                right_top_x = gr.Number(label='Right-Top X', value=0)
-                right_top_y = gr.Number(label='Right-Top Y', value=0)
+                right_top_x = gr.Number(label='Right-Top X', value=100)
+                right_top_y = gr.Number(label='Right-Top Y', value=10)
 
         with gr.Row():
             with gr.Row():
-                left_bottom_x = gr.Number(label='Left-Bottom X', value=0)
-                left_bottom_y = gr.Number(label='Left-Bottom Y', value=0)
+                left_bottom_x = gr.Number(label='Left-Bottom X', value=10)
+                left_bottom_y = gr.Number(label='Left-Bottom Y', value=100)
 
             with gr.Row():
-                right_bottom_x = gr.Number(label='Right-Bottom X', value=0)
-                right_bottom_y = gr.Number(label='Right-Bottom Y', value=0)
+                right_bottom_x = gr.Number(label='Right-Bottom X', value=100)
+                right_bottom_y = gr.Number(label='Right-Bottom Y', value=100)
 
         with gr.Row():
             width = gr.Number(label='Width', value=0)
