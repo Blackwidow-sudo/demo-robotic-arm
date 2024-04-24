@@ -1,5 +1,4 @@
 __pycache__
 *.pt
 .venv
-__pycache__
 .env
