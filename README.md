@@ -4,5 +4,5 @@
 Start gradio dev server with:
 
 ```
-gradio main.py --demo-name app
+gradio main.py
 ```
