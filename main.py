@@ -26,13 +26,6 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
         input_image = gr.Image(type='pil', label='Input Image')
         output_image = gr.Image(type='pil', label='Output Image')
 
-    with gr.Row():
-        button_clear = gr.Button(value='Clear')
-        button_submit = gr.Button(value='Submit', variant='primary')
-
-    button_clear.click(fn=clear)
-    button_submit.click(fn=predict, inputs=[input_image], outputs=[output_image])
-
     with gr.Accordion('Calibration', open=False):
         with gr.Row():
             with gr.Row():
@@ -55,6 +48,13 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
         with gr.Row():
             gr.Number(label='Width', value=0)
             gr.Number(label='Height', value=0)
+
+    with gr.Row():
+        button_clear = gr.Button(value='Clear')
+        button_submit = gr.Button(value='Submit', variant='primary')
+
+    button_clear.click(fn=clear)
+    button_submit.click(fn=predict, inputs=[input_image], outputs=[output_image])
 
 if __name__ == '__main__':
     demo.queue().launch(root_path='/video')
