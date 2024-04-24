@@ -22,7 +22,7 @@ def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom
 
     draw.rectangle(((left_top_x, left_top_y), (right_bottom_x, right_bottom_y)), outline='red', width=2)
 
-    return pil_image
+    return pil_image, [left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height]
 
 with gr.Blocks(css='footer {visibility: hidden}') as demo:
     with gr.Row():
@@ -52,12 +52,14 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
             width = gr.Number(label='Width', value=0)
             height = gr.Number(label='Height', value=0)
 
+        output_text = gr.Textbox(label='Output Text')
+
     with gr.Row():
         button_clear = gr.Button(value='Clear')
         button_submit = gr.Button(value='Submit', variant='primary')
 
     button_clear.click(fn=clear)
-    button_submit.click(fn=predict, inputs=[input_image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image])
+    button_submit.click(fn=predict, inputs=[input_image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image, output_text])
 
 if __name__ == '__main__':
     demo.queue().launch(root_path='/video')
