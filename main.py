@@ -1,7 +1,7 @@
 import config
 import gradio as gr
 import torch
-from PIL import Image
+from PIL import Image, ImageDraw
 from ultralytics import YOLO
 
 device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
@@ -17,6 +17,10 @@ def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom
     for r in results:
         image_array = r.plot(boxes=True)
         pil_image = Image.fromarray(image_array[..., ::-1])
+
+    draw = ImageDraw.Draw(pil_image)
+
+    draw.rectangle(((left_top_x, left_top_y), (right_bottom_x, right_bottom_y)), outline='red', width=2)
 
     return pil_image
 
