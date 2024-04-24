@@ -16,7 +16,7 @@ def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom
         image_array = r.plot(boxes=True)
         pil_image = Image.fromarray(image_array[..., ::-1])
 
-    if config.get('DRAW_CALIBRATION') == 'True':
+    if config.get_bool('DRAW_CALIBRATION'):
         draw = ImageDraw.Draw(pil_image)
 
         draw.line([(left_top_x, left_top_y), (right_top_x, right_top_y)], fill='red', width=2)
@@ -30,7 +30,7 @@ def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom
     matrix = cv.getPerspectiveTransform(source_points.astype(np.float32), destination_points.astype(np.float32))
     warped_image = cv.warpPerspective(np.array(pil_image), matrix, (width, height))
 
-    return warped_image if config.get('OUTPUT_WARPED') == 'True' else pil_image, [left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height]
+    return warped_image if config.get_bool('OUTPUT_WARPED') else pil_image, [left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height]
 
 with gr.Blocks(css='footer {visibility: hidden}') as demo:
     with gr.Row():
