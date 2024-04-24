@@ -31,25 +31,25 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
     with gr.Accordion('Calibration', open=False):
         with gr.Row():
             with gr.Row():
-                left_top_x = gr.Number(label='Left-Top X', value=10)
-                left_top_y = gr.Number(label='Left-Top Y', value=10)
+                left_top_x = gr.Number(label='Left-Top X', value=config.get('CALIBRATION_LEFT_TOP_X', int))
+                left_top_y = gr.Number(label='Left-Top Y', value=config.get('CALIBRATION_LEFT_TOP_Y', int))
 
             with gr.Row():
-                right_top_x = gr.Number(label='Right-Top X', value=100)
-                right_top_y = gr.Number(label='Right-Top Y', value=10)
+                right_top_x = gr.Number(label='Right-Top X', value=config.get('CALIBRATION_RIGHT_TOP_X', int))
+                right_top_y = gr.Number(label='Right-Top Y', value=config.get('CALIBRATION_RIGHT_TOP_Y', int))
 
         with gr.Row():
             with gr.Row():
-                left_bottom_x = gr.Number(label='Left-Bottom X', value=10)
-                left_bottom_y = gr.Number(label='Left-Bottom Y', value=100)
+                left_bottom_x = gr.Number(label='Left-Bottom X', value=config.get('CALIBRATION_LEFT_BOTTOM_X', int))
+                left_bottom_y = gr.Number(label='Left-Bottom Y', value=config.get('CALIBRATION_LEFT_BOTTOM_Y', int))
 
             with gr.Row():
-                right_bottom_x = gr.Number(label='Right-Bottom X', value=100)
-                right_bottom_y = gr.Number(label='Right-Bottom Y', value=100)
+                right_bottom_x = gr.Number(label='Right-Bottom X', value=config.get('CALIBRATION_RIGHT_BOTTOM_X', int))
+                right_bottom_y = gr.Number(label='Right-Bottom Y', value=config.get('CALIBRATION_RIGHT_BOTTOM_Y', int))
 
         with gr.Row():
-            width = gr.Number(label='Width', value=0)
-            height = gr.Number(label='Height', value=0)
+            width = gr.Number(label='Width', value=config.get('CALIBRATION_WIDTH', int))
+            height = gr.Number(label='Height', value=config.get('CALIBRATION_HEIGHT', int))
 
         output_text = gr.Textbox(label='Output Text')
 
