@@ -16,12 +16,13 @@ def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom
         image_array = r.plot(boxes=True)
         pil_image = Image.fromarray(image_array[..., ::-1])
 
-    draw = ImageDraw.Draw(pil_image)
+    if config.get('DRAW_CALIBRATION'):
+        draw = ImageDraw.Draw(pil_image)
 
-    draw.line([(left_top_x, left_top_y), (right_top_x, right_top_y)], fill='red', width=2)
-    draw.line([(right_top_x, right_top_y), (right_bottom_x, right_bottom_y)], fill='red', width=2)
-    draw.line([(right_bottom_x, right_bottom_y), (left_bottom_x, left_bottom_y)], fill='red', width=2)
-    draw.line([(left_bottom_x, left_bottom_y), (left_top_x, left_top_y)], fill='red', width=2)
+        draw.line([(left_top_x, left_top_y), (right_top_x, right_top_y)], fill='red', width=2)
+        draw.line([(right_top_x, right_top_y), (right_bottom_x, right_bottom_y)], fill='red', width=2)
+        draw.line([(right_bottom_x, right_bottom_y), (left_bottom_x, left_bottom_y)], fill='red', width=2)
+        draw.line([(left_bottom_x, left_bottom_y), (left_top_x, left_top_y)], fill='red', width=2)
 
     source_points = np.array([[left_top_x, left_top_y], [right_top_x, right_top_y], [right_bottom_x, right_bottom_y], [left_bottom_x, left_bottom_y]])
     destination_points = np.array([[0, 0], [width, 0], [width, height], [0, height]])
