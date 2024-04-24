@@ -35,12 +35,12 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
 
     with gr.Accordion('Calibration', open=False):
         with gr.Row():
-            gr.Number(label='Marker Left-Top', value=0)
-            gr.Number(label='Marker Right-Top', value=0)
+            gr.Dataframe(label='Left-Top Corner', datatype='number', interactive=True, col_count=2, row_count=1, headers=['X', 'Y'], value=[[0, 0]])
+            gr.Dataframe(label='Right-Top Corner', datatype='number', interactive=True, col_count=2, row_count=1, headers=['X', 'Y'], value=[[0, 0]])
 
         with gr.Row():
-            gr.Number(label='Marker Left-Bottom', value=0)
-            gr.Number(label='Marker Right-Bottom', value=0)
+            gr.Dataframe(label='Left-Bottom Corner', datatype='number', interactive=True, col_count=2, row_count=1, headers=['X', 'Y'], value=[[0, 0]])
+            gr.Dataframe(label='Right-Bottom Corner', datatype='number', interactive=True, col_count=2, row_count=1, headers=['X', 'Y'], value=[[0, 0]])
 
 if __name__ == '__main__':
     demo.queue().launch(root_path='/video')
