@@ -48,8 +48,8 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
                 right_bottom_y = gr.Number(label='Right-Bottom Y', value=config.get('CALIBRATION_RIGHT_BOTTOM_Y', int))
 
         with gr.Row():
-            width = gr.Number(label='Width', value=0)
-            height = gr.Number(label='Height', value=0)
+            width = gr.Number(label='Width', value=config.get('CALIBRATION_WIDTH', int))
+            height = gr.Number(label='Height', value=config.get('CALIBRATION_HEIGHT', int))
 
         output_text = gr.Textbox(label='Output Text')
 
