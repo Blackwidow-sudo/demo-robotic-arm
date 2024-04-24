@@ -6,10 +6,6 @@ from ultralytics import YOLO
 
 device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
 
-def clear():
-    input_image.value = None
-    output_image.value = None
-
 def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height):
     model = YOLO(config.get('MODEL_NAME')).to(device)
     results = model.predict(image)
@@ -58,10 +54,9 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
         output_text = gr.Textbox(label='Output Text')
 
     with gr.Row():
-        button_clear = gr.Button(value='Clear')
+        button_clear = gr.ClearButton(components=[input_image, output_image, output_text], value='Clear')
         button_submit = gr.Button(value='Submit', variant='primary')
 
-    button_clear.click(fn=clear)
     button_submit.click(fn=predict, inputs=[input_image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image, output_text])
 
 if __name__ == '__main__':
