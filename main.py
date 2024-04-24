@@ -35,12 +35,22 @@ with gr.Blocks(css='footer {visibility: hidden}') as demo:
 
     with gr.Accordion('Calibration', open=False):
         with gr.Row():
-            gr.Dataframe(label='Left-Top Corner', datatype='number', interactive=True, col_count=2, row_count=1, headers=['X', 'Y'], value=[[0, 0]])
-            gr.Dataframe(label='Right-Top Corner', datatype='number', interactive=True, col_count=2, row_count=1, headers=['X', 'Y'], value=[[0, 0]])
+            with gr.Row():
+                gr.Number(label='Left-Top X', value=0)
+                gr.Number(label='Left-Top Y', value=0)
+
+            with gr.Row():
+                gr.Number(label='Right-Top X', value=0)
+                gr.Number(label='Right-Top Y', value=0)
 
         with gr.Row():
-            gr.Dataframe(label='Left-Bottom Corner', datatype='number', interactive=True, col_count=2, row_count=1, headers=['X', 'Y'], value=[[0, 0]])
-            gr.Dataframe(label='Right-Bottom Corner', datatype='number', interactive=True, col_count=2, row_count=1, headers=['X', 'Y'], value=[[0, 0]])
+            with gr.Row():
+                gr.Number(label='Left-Bottom X', value=0)
+                gr.Number(label='Left-Bottom Y', value=0)
+
+            with gr.Row():
+                gr.Number(label='Right-Bottom X', value=0)
+                gr.Number(label='Right-Bottom Y', value=0)
 
 if __name__ == '__main__':
     demo.queue().launch(root_path='/video')
