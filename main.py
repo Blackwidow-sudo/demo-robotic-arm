@@ -44,7 +44,7 @@ def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left
 
     warped_image = unscew_img(pil_image, left_top, right_top, left_bottom, right_bottom)
 
-    json_results = to_json_results(results, pil_image.size[0], width)
+    json_results = to_json_results(results, pil_image.size[0] / width)
 
     if config.get_bool('LOG_JSON'):
         with open('results.json', 'w') as f:
@@ -77,10 +77,9 @@ def unscew_img(image: Image, top_left, top_right, bottom_left, bottom_right) -> 
     return Image.fromarray(warped_img)
 
 
-def to_json_results(results, width, width_cm) -> str:
+def to_json_results(results, pxl_per_cm) -> str:
     """Generate JSON string from the results of the model prediction"""
     src_json = json.loads(results[0].tojson())
-    pxl_per_cm = width / width_cm
     result = []
 
     for detected in src_json:
