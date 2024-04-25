@@ -4,6 +4,7 @@ import gradio as gr
 import numpy as np
 import torch
 from PIL import Image, ImageDraw
+from transformers import pipeline
 from ultralytics import YOLO
 
 custom_css = """
@@ -16,9 +17,10 @@ custom_css = """
     }
 """
 device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
+transcriber = pipeline('automatic-speech-recognition', model='openai/whisper-small')
 
 
-def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height):
+def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height):
     model = YOLO(config.get('MODEL_NAME')).to(device)
     results = model.predict(image)
 
@@ -41,7 +43,17 @@ def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom
 
     warped_image = unscew_img(pil_image, left_top, right_top, left_bottom, right_bottom)
 
-    return warped_image if config.get_bool('OUTPUT_WARPED') else pil_image, [left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height]
+    audio_text = transcribe(audio)
+
+    return warped_image if config.get_bool('OUTPUT_WARPED') else pil_image, audio_text
+
+
+def transcribe(audio):
+    sr, y = audio
+    y = y.astype(np.float32)
+    y /= np.max(np.abs(y))
+
+    return transcriber({'sampling_rate': sr, 'raw': y})['text']
 
 
 def unscew_img(image: Image, top_left, top_right, bottom_left, bottom_right) -> Image:
@@ -94,7 +106,7 @@ with gr.Blocks(css=custom_css) as demo:
         button_clear = gr.ClearButton(components=[input_image, output_image, output_text], value='Clear')
         button_submit = gr.Button(value='Submit', variant='primary')
 
-    button_submit.click(fn=predict, inputs=[input_image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image, output_text])
+    button_submit.click(fn=predict, inputs=[input_image, input_audio, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image, output_text])
 
 
 if __name__ == '__main__':
