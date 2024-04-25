@@ -79,6 +79,10 @@ with gr.Blocks(css=custom_css) as demo:
         input_audio = gr.Audio(label='Input Audio', sources=['microphone'])
         output_text = gr.Textbox(label='Output Text')
 
+    with gr.Row():
+        button_clear = gr.ClearButton(components=[input_image, output_image, output_text], value='Clear')
+        button_submit = gr.Button(value='Submit', variant='primary')
+
     with gr.Accordion('Calibration', open=False):
         with gr.Row():
             with gr.Row():
@@ -101,10 +105,6 @@ with gr.Blocks(css=custom_css) as demo:
         with gr.Row():
             width = gr.Number(label='Width', value=config.get_as('CALIBRATION_WIDTH', int))
             height = gr.Number(label='Height', value=config.get_as('CALIBRATION_HEIGHT', int))
-
-    with gr.Row():
-        button_clear = gr.ClearButton(components=[input_image, output_image, output_text], value='Clear')
-        button_submit = gr.Button(value='Submit', variant='primary')
 
     button_submit.click(fn=predict, inputs=[input_image, input_audio, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image, output_text])
 
