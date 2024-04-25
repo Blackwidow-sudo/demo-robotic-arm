@@ -19,8 +19,8 @@ custom_css = """
 """
 
 
-"""Skew image so that the table box is parallel to the image edges"""
 def unscew_img(image: Image, top_left, top_right, bottom_left, bottom_right) -> Image:
+    """Skew image so that the table box is parallel to the image edges"""
     np_img = np.array(image)
     height, width = np_img.shape[:2]
 
