@@ -31,11 +31,20 @@ def unscew_img(image: Image, top_left, top_right, bottom_left, bottom_right) -> 
     warped_img = cv.warpPerspective(np_img, matrix, (width, height))
 
     return Image.fromarray(warped_img)
+
+
+def save_to_json(results):
+    """Save the results to JSON files"""
+    for i, result in enumerate(results):
+        with open(f'result_{i}.json', 'w') as f:
+            f.write(result.tojson())
     
 
 def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height):
     model = YOLO(config.get('MODEL_NAME')).to(device)
     results = model.predict(image)
+
+    save_to_json(results)
 
     left_top = (left_top_x, left_top_y)
     right_top = (right_top_x, right_top_y)
@@ -61,7 +70,7 @@ def predict(image, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom
 
 with gr.Blocks(css=custom_css) as demo:
     with gr.Row():
-        input_image = gr.Image(type='pil', label='Input Image', sources=['webcam'], streaming=True)
+        input_image = gr.Image(type='pil', label='Input Image', sources=['webcam', 'upload'])
         output_image = gr.Image(type='pil', label='Output Image')
 
     with gr.Accordion('Calibration', open=False):
