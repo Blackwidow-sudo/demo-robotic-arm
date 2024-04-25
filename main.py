@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from PIL import Image, ImageDraw
 from transformers import pipeline
+import json
 from ultralytics import YOLO
 
 custom_css = """
@@ -23,8 +24,6 @@ transcriber = pipeline('automatic-speech-recognition', model='openai/whisper-sma
 def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height):
     model = YOLO(config.get('MODEL_NAME')).to(device)
     results = model.predict(image)
-
-    save_to_json(results)
 
     left_top = (left_top_x, left_top_y)
     right_top = (right_top_x, right_top_y)
@@ -45,9 +44,15 @@ def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left
 
     warped_image = unscew_img(pil_image, left_top, right_top, left_bottom, right_bottom)
 
+    json_results = to_json_results(results, pil_image.size[0], width)
+
+    if config.get_bool('LOG_JSON'):
+        with open('results.json', 'w') as f:
+            f.write(json_results)
+
     audio_text = transcribe(audio)
 
-    return warped_image if config.get_bool('OUTPUT_WARPED') else pil_image, audio_text
+    return warped_image if config.get_bool('OUTPUT_WARPED') else pil_image, audio_text, json_results
 
 
 def transcribe(audio):
@@ -72,14 +77,42 @@ def unscew_img(image: Image, top_left, top_right, bottom_left, bottom_right) -> 
     return Image.fromarray(warped_img)
 
 
+def to_json_results(results, width, width_cm) -> str:
+    """Generate JSON string from the results of the model prediction"""
+    src_json = json.loads(results[0].tojson())
+    pxl_per_cm = width / width_cm
+    result = []
+
+    for detected in src_json:
+        box = detected['box']
+
+        result.append({
+            'id': detected['name'],
+            'confidence': detected['confidence'],
+            'area': (box['x2'] - box['x1']) / pxl_per_cm * (box['y2'] - box['y1']) / pxl_per_cm,
+            'bb': detected['box'],
+            'bb_cm': {
+                'x1': box['x1'] / pxl_per_cm,
+                'y1': box['y1'] / pxl_per_cm,
+                'x2': box['x2'] / pxl_per_cm,
+                'y2': box['y2'] / pxl_per_cm
+            }
+        })
+
+    return json.dumps(result, indent=2)
+
+
 with gr.Blocks(css=custom_css) as demo:
     with gr.Row():
-        input_image = gr.Image(type='pil', label='Input Image', sources=['webcam'], streaming=True)
+        input_image = gr.Image(type='pil', label='Input Image', sources=['webcam', 'upload'])
         output_image = gr.Image(type='pil', label='Output Image')
 
     with gr.Row():
         input_audio = gr.Audio(label='Input Audio', sources=['microphone'])
         output_text = gr.Textbox(label='Output Text')
+
+    with gr.Column():
+        output_json = gr.Code(label='Output JSON')
 
     with gr.Accordion('Calibration', open=False):
         with gr.Row():
@@ -101,14 +134,14 @@ with gr.Blocks(css=custom_css) as demo:
                 right_bottom_y = gr.Number(label='Right-Bottom Y', value=config.get_as('CALIBRATION_RIGHT_BOTTOM_Y', int))
 
         with gr.Row():
-            width = gr.Number(label='Width', value=config.get_as('CALIBRATION_WIDTH', int))
-            height = gr.Number(label='Height', value=config.get_as('CALIBRATION_HEIGHT', int))
+            width = gr.Number(label='Width', value=config.get_as('CALIBRATION_WIDTH', float))
+            height = gr.Number(label='Height', value=config.get_as('CALIBRATION_HEIGHT', float))
 
     with gr.Row():
         button_clear = gr.ClearButton(components=[input_image, output_image, output_text], value='Clear')
         button_submit = gr.Button(value='Submit', variant='primary')
 
-    button_submit.click(fn=predict, inputs=[input_image, input_audio, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image, output_text])
+    button_submit.click(fn=predict, inputs=[input_image, input_audio, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image, output_text, output_json])
 
 
 if __name__ == '__main__':
