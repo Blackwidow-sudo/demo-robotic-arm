@@ -104,7 +104,7 @@ def to_json_results(results, width, width_cm) -> str:
 
 with gr.Blocks(css=custom_css) as demo:
     with gr.Row():
-        input_image = gr.Image(type='pil', label='Input Image', sources=['webcam', 'upload'])
+        input_image = gr.Image(type='pil', label='Input Image', sources=['webcam'], streaming=True)
         output_image = gr.Image(type='pil', label='Output Image')
 
     with gr.Row():
