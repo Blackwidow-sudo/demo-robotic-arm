@@ -4,3 +4,13 @@ values = dotenv_values(".env")
 
 def get(key):
     return values.get(key, None)
+
+def get_as(key, type=str):
+    value = values.get(key, None)
+
+    return value if value is None else type(value)
+
+def get_bool(key):
+    value = values.get(key, None)
+
+    return value if value is None else value.lower() == 'true'
