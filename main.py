@@ -27,6 +27,14 @@ def predict(image, audio, draw_calibration, output_warped, left_top_x, left_top_
     left_bottom = (left_bottom_x, left_bottom_y)
     right_bottom = (right_bottom_x, right_bottom_y)
 
+    if draw_calibration:
+        draw = ImageDraw.Draw(image)
+
+        draw.line([left_top, right_top], fill='red', width=2)
+        draw.line([right_top, right_bottom], fill='red', width=2)
+        draw.line([right_bottom, left_bottom], fill='red', width=2)
+        draw.line([left_bottom, left_top], fill='red', width=2)
+
     image = unscew_img(image, left_top, right_top, left_bottom, right_bottom) if output_warped else image
     model = YOLO(config.get('MODEL_NAME')).to(device)
     results = model.predict(image)
@@ -34,14 +42,6 @@ def predict(image, audio, draw_calibration, output_warped, left_top_x, left_top_
     for r in results:
         image_array = r.plot(boxes=True)
         pil_image = Image.fromarray(image_array[..., ::-1])
-
-    if draw_calibration:
-        draw = ImageDraw.Draw(pil_image)
-
-        draw.line([left_top, right_top], fill='red', width=2)
-        draw.line([right_top, right_bottom], fill='red', width=2)
-        draw.line([right_bottom, left_bottom], fill='red', width=2)
-        draw.line([left_bottom, left_top], fill='red', width=2)
 
     json_results = to_json_results(results[0], (pil_image.size[0] / width + pil_image.size[1] / height) / 2)
 
