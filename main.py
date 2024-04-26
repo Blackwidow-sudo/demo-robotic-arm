@@ -1,13 +1,14 @@
 import config
 import cv2 as cv
 import gradio as gr
+import json
 import numpy as np
 import torch
 from PIL import Image, ImageDraw
 from transformers import pipeline
 from ultralytics import YOLO
 
-custom_css = """
+custom_css = '''
     footer {
         visibility: hidden;
     }
@@ -15,19 +16,20 @@ custom_css = """
     .app.gradio-container {
         max-width: 100% !important;
     }
-"""
+'''
 device = 'cuda' if torch.cuda.is_available() else 'mps' if config.get('ALLOW_MPS') and torch.backends.mps.is_available() else 'cpu'
 transcriber = pipeline('automatic-speech-recognition', model='openai/whisper-small')
 
 
 def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height):
-    model = YOLO(config.get('MODEL_NAME')).to(device)
-    results = model.predict(image)
-
     left_top = (left_top_x, left_top_y)
     right_top = (right_top_x, right_top_y)
     left_bottom = (left_bottom_x, left_bottom_y)
     right_bottom = (right_bottom_x, right_bottom_y)
+
+    image = unscew_img(image, left_top, right_top, left_bottom, right_bottom) if config.get_bool('OUTPUT_WARPED') else image
+    model = YOLO(config.get('MODEL_NAME')).to(device)
+    results = model.predict(image)
 
     for r in results:
         image_array = r.plot(boxes=True)
@@ -41,14 +43,44 @@ def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left
         draw.line([right_bottom, left_bottom], fill='red', width=2)
         draw.line([left_bottom, left_top], fill='red', width=2)
 
-    warped_image = unscew_img(pil_image, left_top, right_top, left_bottom, right_bottom)
+    json_results = to_json_results(results[0], (pil_image.size[0] / width + pil_image.size[1] / height) / 2)
+
+    if config.get_bool('LOG_JSON'):
+        with open('results.json', 'w') as f:
+            f.write(json_results)
 
     audio_text = transcribe(audio)
 
-    return warped_image if config.get_bool('OUTPUT_WARPED') else pil_image, audio_text
+    return pil_image, audio_text, json_results
+
+
+def to_json_results(result, pxl_per_cm) -> str:
+    '''Generate JSON string from the results of the model prediction'''
+    src_json = json.loads(result.tojson())
+    result = []
+
+    for detected in src_json:
+        box = detected['box']
+
+        result.append({
+            'id': detected['name'],
+            'area': (box['x2'] - box['x1']) / pxl_per_cm * (box['y2'] - box['y1']) / pxl_per_cm,
+            'bb': detected['box'],
+            'bb_cm': {
+                'x1': box['x1'] / pxl_per_cm,
+                'y1': box['y1'] / pxl_per_cm,
+                'x2': box['x2'] / pxl_per_cm,
+                'y2': box['y2'] / pxl_per_cm
+            },
+            'confidence': detected['confidence'],
+        })
+
+    return json.dumps(result, indent=2)
 
 
 def transcribe(audio):
+    if audio is None:
+        return ''
     sr, y = audio
     y = y.astype(np.float32)
     y /= np.max(np.abs(y))
@@ -57,7 +89,7 @@ def transcribe(audio):
 
 
 def unscew_img(image: Image, top_left, top_right, bottom_left, bottom_right) -> Image:
-    """Skew image so that the table box is parallel to the image edges"""
+    '''Skew image so that the table box is parallel to the image edges'''
     np_img = np.array(image)
     height, width = np_img.shape[:2]
 
@@ -103,10 +135,13 @@ with gr.Blocks(css=custom_css) as demo:
                 right_bottom_y = gr.Number(label='Right-Bottom Y', value=config.get_as('CALIBRATION_RIGHT_BOTTOM_Y', int))
 
         with gr.Row():
-            width = gr.Number(label='Width', value=config.get_as('CALIBRATION_WIDTH', int))
-            height = gr.Number(label='Height', value=config.get_as('CALIBRATION_HEIGHT', int))
+            width = gr.Number(label='Width', value=config.get_as('CALIBRATION_WIDTH', float))
+            height = gr.Number(label='Height', value=config.get_as('CALIBRATION_HEIGHT', float))
 
-    button_submit.click(fn=predict, inputs=[input_image, input_audio, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image, output_text])
+        with gr.Column():
+            output_json = gr.Textbox(label='Output JSON', )
+
+    button_submit.click(fn=predict, inputs=[input_image, input_audio, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image, output_text, output_json])
 
 
 if __name__ == '__main__':
