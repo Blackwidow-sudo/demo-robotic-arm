@@ -21,13 +21,13 @@ device = 'cuda' if torch.cuda.is_available() else 'mps' if config.get('ALLOW_MPS
 transcriber = pipeline('automatic-speech-recognition', model='openai/whisper-small')
 
 
-def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height):
+def predict(image, audio, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height):
     left_top = (left_top_x, left_top_y)
     right_top = (right_top_x, right_top_y)
     left_bottom = (left_bottom_x, left_bottom_y)
     right_bottom = (right_bottom_x, right_bottom_y)
 
-    image = unscew_img(image, left_top, right_top, left_bottom, right_bottom) if config.get_bool('OUTPUT_WARPED') else image
+    image = unscew_img(image, left_top, right_top, left_bottom, right_bottom) if output_warped else image
     model = YOLO(config.get('MODEL_NAME')).to(device)
     results = model.predict(image)
 
@@ -35,7 +35,7 @@ def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left
         image_array = r.plot(boxes=True)
         pil_image = Image.fromarray(image_array[..., ::-1])
 
-    if config.get_bool('DRAW_CALIBRATION'):
+    if draw_calibration:
         draw = ImageDraw.Draw(pil_image)
 
         draw.line([left_top, right_top], fill='red', width=2)
@@ -117,6 +117,10 @@ with gr.Blocks(css=custom_css) as demo:
 
     with gr.Accordion('Calibration', open=False):
         with gr.Row():
+            draw_calibration = gr.Checkbox(label='Draw Calibration', value=config.get_bool('DRAW_CALIBRATION'))
+            output_warped = gr.Checkbox(label='Output Warped', value=config.get_bool('OUTPUT_WARPED'))
+
+        with gr.Row():
             with gr.Row():
                 left_top_x = gr.Number(label='Left-Top X', value=config.get_as('CALIBRATION_LEFT_TOP_X', int))
                 left_top_y = gr.Number(label='Left-Top Y', value=config.get_as('CALIBRATION_LEFT_TOP_Y', int))
@@ -141,7 +145,7 @@ with gr.Blocks(css=custom_css) as demo:
         with gr.Column():
             output_json = gr.Textbox(label='Output JSON', )
 
-    button_submit.click(fn=predict, inputs=[input_image, input_audio, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image, output_text, output_json])
+    button_submit.click(fn=predict, inputs=[input_image, input_audio, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image, output_text, output_json])
 
 
 if __name__ == '__main__':
