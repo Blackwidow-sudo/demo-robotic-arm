@@ -6,10 +6,9 @@ import numpy as np
 import torch
 from PIL import Image, ImageDraw
 from transformers import pipeline
-import json
 from ultralytics import YOLO
 
-custom_css = """
+custom_css = '''
     footer {
         visibility: hidden;
     }
@@ -17,7 +16,7 @@ custom_css = """
     .app.gradio-container {
         max-width: 100% !important;
     }
-"""
+'''
 device = 'cuda' if torch.cuda.is_available() else 'mps' if config.get('ALLOW_MPS') and torch.backends.mps.is_available() else 'cpu'
 transcriber = pipeline('automatic-speech-recognition', model='openai/whisper-small')
 
@@ -55,6 +54,30 @@ def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left
     return pil_image, audio_text, json_results
 
 
+def to_json_results(result, pxl_per_cm) -> str:
+    '''Generate JSON string from the results of the model prediction'''
+    src_json = json.loads(result.tojson())
+    result = []
+
+    for detected in src_json:
+        box = detected['box']
+
+        result.append({
+            'id': detected['name'],
+            'area': (box['x2'] - box['x1']) / pxl_per_cm * (box['y2'] - box['y1']) / pxl_per_cm,
+            'bb': detected['box'],
+            'bb_cm': {
+                'x1': box['x1'] / pxl_per_cm,
+                'y1': box['y1'] / pxl_per_cm,
+                'x2': box['x2'] / pxl_per_cm,
+                'y2': box['y2'] / pxl_per_cm
+            },
+            'confidence': detected['confidence'],
+        })
+
+    return json.dumps(result, indent=2)
+
+
 def transcribe(audio):
     if audio is None:
         return ''
@@ -66,7 +89,7 @@ def transcribe(audio):
 
 
 def unscew_img(image: Image, top_left, top_right, bottom_left, bottom_right) -> Image:
-    """Skew image so that the table box is parallel to the image edges"""
+    '''Skew image so that the table box is parallel to the image edges'''
     np_img = np.array(image)
     height, width = np_img.shape[:2]
 
@@ -77,30 +100,6 @@ def unscew_img(image: Image, top_left, top_right, bottom_left, bottom_right) -> 
     warped_img = cv.warpPerspective(np_img, matrix, (width, height))
 
     return Image.fromarray(warped_img)
-
-
-def to_json_results(result, pxl_per_cm) -> str:
-    """Generate JSON string from the results of the model prediction"""
-    src_json = json.loads(result.tojson())
-    result = []
-
-    for detected in src_json:
-        box = detected['box']
-
-        result.append({
-            'id': detected['name'],
-            'confidence': detected['confidence'],
-            'area': (box['x2'] - box['x1']) / pxl_per_cm * (box['y2'] - box['y1']) / pxl_per_cm,
-            'bb': detected['box'],
-            'bb_cm': {
-                'x1': box['x1'] / pxl_per_cm,
-                'y1': box['y1'] / pxl_per_cm,
-                'x2': box['x2'] / pxl_per_cm,
-                'y2': box['y2'] / pxl_per_cm
-            }
-        })
-
-    return json.dumps(result, indent=2)
 
 
 with gr.Blocks(css=custom_css) as demo:
