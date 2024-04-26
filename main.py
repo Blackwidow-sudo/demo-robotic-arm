@@ -1,6 +1,7 @@
 import config
 import cv2 as cv
 import gradio as gr
+import json
 import numpy as np
 import torch
 from PIL import Image, ImageDraw
@@ -22,13 +23,14 @@ transcriber = pipeline('automatic-speech-recognition', model='openai/whisper-sma
 
 
 def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height):
-    model = YOLO(config.get('MODEL_NAME')).to(device)
-    results = model.predict(image)
-
     left_top = (left_top_x, left_top_y)
     right_top = (right_top_x, right_top_y)
     left_bottom = (left_bottom_x, left_bottom_y)
     right_bottom = (right_bottom_x, right_bottom_y)
+
+    image = unscew_img(image, left_top, right_top, left_bottom, right_bottom) if config.get_bool('OUTPUT_WARPED') else image
+    model = YOLO(config.get('MODEL_NAME')).to(device)
+    results = model.predict(image)
 
     for r in results:
         image_array = r.plot(boxes=True)
@@ -42,9 +44,7 @@ def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left
         draw.line([right_bottom, left_bottom], fill='red', width=2)
         draw.line([left_bottom, left_top], fill='red', width=2)
 
-    warped_image = unscew_img(pil_image, left_top, right_top, left_bottom, right_bottom)
-
-    json_results = to_json_results(results, pil_image.size[0] / width)
+    json_results = to_json_results(results[0], pil_image.size[0] / width)
 
     if config.get_bool('LOG_JSON'):
         with open('results.json', 'w') as f:
@@ -52,10 +52,12 @@ def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left
 
     audio_text = transcribe(audio)
 
-    return warped_image if config.get_bool('OUTPUT_WARPED') else pil_image, audio_text, json_results
+    return pil_image, audio_text, json_results
 
 
 def transcribe(audio):
+    if audio is None:
+        return ''
     sr, y = audio
     y = y.astype(np.float32)
     y /= np.max(np.abs(y))
@@ -77,9 +79,9 @@ def unscew_img(image: Image, top_left, top_right, bottom_left, bottom_right) -> 
     return Image.fromarray(warped_img)
 
 
-def to_json_results(results, pxl_per_cm) -> str:
+def to_json_results(result, pxl_per_cm) -> str:
     """Generate JSON string from the results of the model prediction"""
-    src_json = json.loads(results[0].tojson())
+    src_json = json.loads(result.tojson())
     result = []
 
     for detected in src_json:
@@ -110,9 +112,6 @@ with gr.Blocks(css=custom_css) as demo:
         input_audio = gr.Audio(label='Input Audio', sources=['microphone'])
         output_text = gr.Textbox(label='Output Text')
 
-    with gr.Column():
-        output_json = gr.Code(label='Output JSON')
-
     with gr.Accordion('Calibration', open=False):
         with gr.Row():
             with gr.Row():
@@ -135,6 +134,9 @@ with gr.Blocks(css=custom_css) as demo:
         with gr.Row():
             width = gr.Number(label='Width', value=config.get_as('CALIBRATION_WIDTH', float))
             height = gr.Number(label='Height', value=config.get_as('CALIBRATION_HEIGHT', float))
+
+        with gr.Column():
+            output_json = gr.Textbox(label='Output JSON', )
 
     with gr.Row():
         button_clear = gr.ClearButton(components=[input_image, output_image, output_text], value='Clear')
