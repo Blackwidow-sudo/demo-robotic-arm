@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw
 from transformers import pipeline
 from ultralytics import YOLO
 
-device = 'cuda' if torch.cuda.is_available() else 'mps' if config.get('ALLOW_MPS') and torch.backends.mps.is_available() else 'cpu'
+device = 'cuda' if torch.cuda.is_available() else 'mps' if config.get_bool('ALLOW_MPS') and torch.backends.mps.is_available() else 'cpu'
 transcriber = pipeline('automatic-speech-recognition', model='openai/whisper-small')
 
 
