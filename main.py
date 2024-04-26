@@ -35,7 +35,7 @@ def predict(image, audio, draw_calibration, output_warped, left_top_x, left_top_
         draw.line([right_bottom, left_bottom], fill='red', width=2)
         draw.line([left_bottom, left_top], fill='red', width=2)
 
-    image = unscew_img(image, left_top, right_top, left_bottom, right_bottom) if output_warped else image
+    image = warp_image(image, left_top, right_top, left_bottom, right_bottom) if output_warped else image
     model = YOLO(config.get('MODEL_NAME')).to(device)
     results = model.predict(image)
 
@@ -88,7 +88,7 @@ def transcribe(audio):
     return transcriber({'sampling_rate': sr, 'raw': y})['text']
 
 
-def unscew_img(image: Image, top_left, top_right, bottom_left, bottom_right) -> Image:
+def warp_image(image: Image, top_left, top_right, bottom_left, bottom_right) -> Image:
     '''Skew image so that the table box is parallel to the image edges'''
     np_img = np.array(image)
     height, width = np_img.shape[:2]
