@@ -44,7 +44,7 @@ def predict(image, audio, left_top_x, left_top_y, right_top_x, right_top_y, left
         draw.line([right_bottom, left_bottom], fill='red', width=2)
         draw.line([left_bottom, left_top], fill='red', width=2)
 
-    json_results = to_json_results(results[0], pil_image.size[0] / width)
+    json_results = to_json_results(results[0], (pil_image.size[0] / width + pil_image.size[1] / height) / 2)
 
     if config.get_bool('LOG_JSON'):
         with open('results.json', 'w') as f:
