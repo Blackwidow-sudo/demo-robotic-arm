@@ -8,15 +8,6 @@ from PIL import Image, ImageDraw
 from transformers import pipeline
 from ultralytics import YOLO
 
-custom_css = '''
-    footer {
-        visibility: hidden;
-    }
-
-    .app.gradio-container {
-        max-width: 100% !important;
-    }
-'''
 device = 'cuda' if torch.cuda.is_available() else 'mps' if config.get('ALLOW_MPS') and torch.backends.mps.is_available() else 'cpu'
 transcriber = pipeline('automatic-speech-recognition', model='openai/whisper-small')
 
@@ -102,7 +93,7 @@ def warp_image(image: Image, top_left, top_right, bottom_left, bottom_right) -> 
     return Image.fromarray(warped_img)
 
 
-with gr.Blocks(css=custom_css) as demo:
+with gr.Blocks(css='style.css') as demo:
     with gr.Row():
         input_image = gr.Image(type='pil', label='Input Image', sources=['webcam'], streaming=True)
         output_image = gr.Image(type='pil', label='Output Image')

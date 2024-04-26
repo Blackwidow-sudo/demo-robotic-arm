@@ -1,0 +1,7 @@
+footer {
+    visibility: hidden;
+}
+
+.app.gradio-container {
+    max-width: 100% !important;
+}
