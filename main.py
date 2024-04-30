@@ -12,7 +12,7 @@ device = 'cuda' if torch.cuda.is_available() else 'mps' if config.get_bool('ALLO
 transcriber = pipeline('automatic-speech-recognition', model='openai/whisper-small')
 
 
-def predict(image, audio, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height):
+def predict(image, audio, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height, offset_x, offset_y):
     left_top = (left_top_x, left_top_y)
     right_top = (right_top_x, right_top_y)
     left_bottom = (left_bottom_x, left_bottom_y)
@@ -34,7 +34,7 @@ def predict(image, audio, draw_calibration, output_warped, left_top_x, left_top_
         image_array = r.plot(boxes=True)
         pil_image = Image.fromarray(image_array[..., ::-1])
 
-    json_results = to_json_results(results[0], (pil_image.size[0] / width + pil_image.size[1] / height) / 2)
+    json_results = to_json_results(results[0], (pil_image.size[0] / width + pil_image.size[1] / height) / 2, offset_x, offset_y)
 
     if config.get_bool('LOG_JSON'):
         with open('results.json', 'w') as f:
@@ -45,7 +45,7 @@ def predict(image, audio, draw_calibration, output_warped, left_top_x, left_top_
     return pil_image, audio_text, json_results
 
 
-def to_json_results(result, pxl_per_cm) -> str:
+def to_json_results(result, pxl_per_cm, offset_x, offset_y) -> str:
     '''Generate JSON string from the results of the model prediction'''
     src_json = json.loads(result.tojson())
     result = []
@@ -58,10 +58,10 @@ def to_json_results(result, pxl_per_cm) -> str:
             'area': (box['x2'] - box['x1']) / pxl_per_cm * (box['y2'] - box['y1']) / pxl_per_cm,
             'bb': detected['box'],
             'bb_cm': {
-                'x1': box['x1'] / pxl_per_cm,
-                'y1': box['y1'] / pxl_per_cm,
-                'x2': box['x2'] / pxl_per_cm,
-                'y2': box['y2'] / pxl_per_cm
+                'x1': box['x1'] / pxl_per_cm + offset_x,
+                'y1': box['y1'] / pxl_per_cm + offset_y,
+                'x2': box['x2'] / pxl_per_cm + offset_x,
+                'y2': box['y2'] / pxl_per_cm + offset_y,
             },
             'confidence': detected['confidence'],
         })
@@ -140,7 +140,7 @@ with gr.Blocks(css='style.css') as demo:
         with gr.Column():
             output_json = gr.Textbox(label='Output JSON', )
 
-    button_submit.click(fn=predict, inputs=[input_image, input_audio, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height], outputs=[output_image, output_text, output_json])
+    button_submit.click(fn=predict, inputs=[input_image, input_audio, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height, offset_x, offset_y], outputs=[output_image, output_text, output_json])
 
 
 if __name__ == '__main__':
