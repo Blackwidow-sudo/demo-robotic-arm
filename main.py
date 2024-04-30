@@ -133,6 +133,10 @@ with gr.Blocks(css='style.css') as demo:
             width = gr.Number(label='Width', value=config.get_as('CALIBRATION_WIDTH', float))
             height = gr.Number(label='Height', value=config.get_as('CALIBRATION_HEIGHT', float))
 
+        with gr.Row():
+            offset_x = gr.Number(label='Offset X', value=config.get_as('CALIBRATION_OFFSET_X', int))
+            offset_y = gr.Number(label='Offset Y', value=config.get_as('CALIBRATION_OFFSET_Y', int))
+
         with gr.Column():
             output_json = gr.Textbox(label='Output JSON', )
 
