@@ -133,12 +133,13 @@ with gr.Blocks(css='style.css') as demo:
                 right_bottom_y = gr.Number(label='Right-Bottom Y', value=config.get_as('CALIBRATION_RIGHT_BOTTOM_Y', int))
 
         with gr.Row():
-            width = gr.Number(label='Width', value=config.get_as('CALIBRATION_WIDTH', float))
-            height = gr.Number(label='Height', value=config.get_as('CALIBRATION_HEIGHT', float))
+            with gr.Row():
+                width = gr.Number(label='Width', value=config.get_as('CALIBRATION_WIDTH', float))
+                height = gr.Number(label='Height', value=config.get_as('CALIBRATION_HEIGHT', float))
 
-        with gr.Row():
-            offset_x = gr.Number(label='Offset X', value=config.get_as('CALIBRATION_OFFSET_X', int))
-            offset_y = gr.Number(label='Offset Y', value=config.get_as('CALIBRATION_OFFSET_Y', int))
+            with gr.Row():
+                offset_x = gr.Number(label='Offset X', value=config.get_as('CALIBRATION_OFFSET_X', int))
+                offset_y = gr.Number(label='Offset Y', value=config.get_as('CALIBRATION_OFFSET_Y', int))
 
         with gr.Column():
             mapping = gr.Dataframe(label='Mapping', col_count=2, datatype=['str', 'number'], interactive=True, type='array')
