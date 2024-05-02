@@ -138,6 +138,7 @@ with gr.Blocks(css='style.css') as demo:
             offset_y = gr.Number(label='Offset Y', value=config.get_as('CALIBRATION_OFFSET_Y', int))
 
         with gr.Column():
+            mapping = gr.Dataframe(label='Mapping', col_count=2, datatype=['str', 'number'], interactive=True, type='array')
             output_json = gr.Textbox(label='Output JSON', )
 
     button_submit.click(fn=predict, inputs=[input_image, input_audio, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height, offset_x, offset_y], outputs=[output_image, output_text, output_json])
