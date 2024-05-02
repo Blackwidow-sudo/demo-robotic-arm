@@ -12,7 +12,7 @@ device = 'cuda' if torch.cuda.is_available() else 'mps' if config.get_bool('ALLO
 transcriber = pipeline('automatic-speech-recognition', model='openai/whisper-small')
 
 
-def predict(image, audio, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height, offset_x, offset_y):
+def predict(image, audio, sort_order, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height, offset_x, offset_y):
     left_top = (left_top_x, left_top_y)
     right_top = (right_top_x, right_top_y)
     left_bottom = (left_bottom_x, left_bottom_y)
@@ -108,6 +108,9 @@ with gr.Blocks(css='style.css') as demo:
 
     with gr.Accordion('Calibration', open=False):
         with gr.Row():
+            sort_order = gr.Dropdown(label='Sort Order', choices=['Area', 'Confidence'], value='Confidence')
+
+        with gr.Row():
             draw_calibration = gr.Checkbox(label='Draw Calibration', value=config.get_bool('DRAW_CALIBRATION'))
             output_warped = gr.Checkbox(label='Output Warped', value=config.get_bool('OUTPUT_WARPED'))
 
@@ -141,7 +144,7 @@ with gr.Blocks(css='style.css') as demo:
             mapping = gr.Dataframe(label='Mapping', col_count=2, datatype=['str', 'number'], interactive=True, type='array')
             output_json = gr.Textbox(label='Output JSON', )
 
-    button_submit.click(fn=predict, inputs=[input_image, input_audio, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height, offset_x, offset_y], outputs=[output_image, output_text, output_json])
+    button_submit.click(fn=predict, inputs=[input_image, input_audio, sort_order, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height, offset_x, offset_y], outputs=[output_image, output_text, output_json])
 
 
 if __name__ == '__main__':
