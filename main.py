@@ -34,7 +34,7 @@ def predict(image, audio, sort_order, draw_calibration, output_warped, left_top_
         image_array = r.plot(boxes=True)
         pil_image = Image.fromarray(image_array[..., ::-1])
 
-    json_results = to_json_results(results[0], (pil_image.size[0] / width + pil_image.size[1] / height) / 2, offset_x, offset_y)
+    json_results = to_json_results(results[0], sort_order, (pil_image.size[0] / width + pil_image.size[1] / height) / 2, offset_x, offset_y)
 
     if config.get_bool('LOG_JSON'):
         with open('results.json', 'w') as f:
@@ -45,7 +45,7 @@ def predict(image, audio, sort_order, draw_calibration, output_warped, left_top_
     return pil_image, audio_text, json_results
 
 
-def to_json_results(result, pxl_per_cm, offset_x, offset_y) -> str:
+def to_json_results(result, sort_order, pxl_per_cm, offset_x, offset_y) -> str:
     '''Generate JSON string from the results of the model prediction'''
     src_json = json.loads(result.tojson())
     result = []
@@ -66,7 +66,9 @@ def to_json_results(result, pxl_per_cm, offset_x, offset_y) -> str:
             'confidence': detected['confidence'],
         })
 
-    return json.dumps(result, indent=2)
+    sorted_result = sorted(result, key=lambda x: x[sort_order.lower()], reverse=True)
+
+    return json.dumps(sorted_result, indent=2)
 
 
 def transcribe(audio):
