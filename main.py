@@ -85,13 +85,10 @@ def rank_depths(image, result):
         x1, y1, x2, y2 = contour.boxes.xyxy.cpu().numpy().squeeze().astype(np.int32)
         iso_crop = isolated[y1:y2, x1:x2]
 
-        # Rank the objects by brightest found pixel
+        # Add objects with their brightest pixel value
         ranking.append((f'{label}_{ci}', np.max(iso_crop)))
 
-    # Sort by brightness
-    ranking.sort(key=lambda x: x[1], reverse=True)
-
-    return ranking
+    return sorted(ranking, key=lambda x: x[1], reverse=True)
 
 
 def to_json_results(result, sort_order, pxl_per_cm, offset_x, offset_y) -> str:
