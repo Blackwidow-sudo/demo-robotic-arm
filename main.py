@@ -12,6 +12,42 @@ device = 'cuda' if torch.cuda.is_available() else 'mps' if config.get_bool('ALLO
 transcriber = pipeline('automatic-speech-recognition', model='openai/whisper-small')
 
 
+def predict(image, audio, sort_order, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height, offset_x, offset_y):
+    left_top = (left_top_x, left_top_y)
+    right_top = (right_top_x, right_top_y)
+    left_bottom = (left_bottom_x, left_bottom_y)
+    right_bottom = (right_bottom_x, right_bottom_y)
+
+    if draw_calibration:
+        draw = ImageDraw.Draw(image)
+
+        draw.line([left_top, right_top], fill='red', width=2)
+        draw.line([right_top, right_bottom], fill='red', width=2)
+        draw.line([right_bottom, left_bottom], fill='red', width=2)
+        draw.line([left_bottom, left_top], fill='red', width=2)
+
+    image = warp_image(image, left_top, right_top, left_bottom, right_bottom) if output_warped else image
+    model = YOLO(config.get('MODEL_NAME')).to(device)
+    results = model.predict(image)
+
+    for r in results:
+        image_array = r.plot(boxes=True)
+        pil_image = Image.fromarray(image_array[..., ::-1])
+
+    json_results = to_json_results(results[0], sort_order, (pil_image.size[0] / width + pil_image.size[1] / height) / 2, offset_x, offset_y)
+
+    depth_ranking = rank_depths(image, results[0])
+    print('Depths:', depth_ranking)
+
+    if config.get_bool('LOG_JSON'):
+        with open('results.json', 'w') as f:
+            f.write(json_results)
+
+    audio_text = transcribe(audio)
+
+    return pil_image, audio_text, json_results
+
+
 def rank_depths(image, result):
     '''Rank the detected objects by depth (brightness) using the depth estimation model'''
     pipe = pipeline(task='depth-estimation', model='LiheYoung/depth-anything-small-hf')
@@ -56,42 +92,6 @@ def rank_depths(image, result):
     ranking.sort(key=lambda x: x[1], reverse=True)
 
     return ranking
-
-
-def predict(image, audio, sort_order, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height, offset_x, offset_y):
-    left_top = (left_top_x, left_top_y)
-    right_top = (right_top_x, right_top_y)
-    left_bottom = (left_bottom_x, left_bottom_y)
-    right_bottom = (right_bottom_x, right_bottom_y)
-
-    if draw_calibration:
-        draw = ImageDraw.Draw(image)
-
-        draw.line([left_top, right_top], fill='red', width=2)
-        draw.line([right_top, right_bottom], fill='red', width=2)
-        draw.line([right_bottom, left_bottom], fill='red', width=2)
-        draw.line([left_bottom, left_top], fill='red', width=2)
-
-    image = warp_image(image, left_top, right_top, left_bottom, right_bottom) if output_warped else image
-    model = YOLO(config.get('MODEL_NAME')).to(device)
-    results = model.predict(image)
-
-    for r in results:
-        image_array = r.plot(boxes=True)
-        pil_image = Image.fromarray(image_array[..., ::-1])
-
-    json_results = to_json_results(results[0], sort_order, (pil_image.size[0] / width + pil_image.size[1] / height) / 2, offset_x, offset_y)
-
-    depth_ranking = rank_depths(image, results[0])
-    print('Depths:', depth_ranking)
-
-    if config.get_bool('LOG_JSON'):
-        with open('results.json', 'w') as f:
-            f.write(json_results)
-
-    audio_text = transcribe(audio)
-
-    return pil_image, audio_text, json_results
 
 
 def to_json_results(result, sort_order, pxl_per_cm, offset_x, offset_y) -> str:
