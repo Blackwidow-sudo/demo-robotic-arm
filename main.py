@@ -34,10 +34,8 @@ def predict(image, audio, sort_order, draw_calibration, output_warped, left_top_
         image_array = r.plot(boxes=True)
         pil_image = Image.fromarray(image_array[..., ::-1])
 
-    json_results = to_json_results(results[0], sort_order, (pil_image.size[0] / width + pil_image.size[1] / height) / 2, offset_x, offset_y)
-
     depth_ranking = rank_depths(image, results[0])
-    print('Depths:', depth_ranking)
+    json_results = to_json_results(results[0], sort_order, (pil_image.size[0] / width + pil_image.size[1] / height) / 2, offset_x, offset_y, depth_ranking)
 
     if config.get_bool('LOG_JSON'):
         with open('results.json', 'w') as f:
@@ -86,18 +84,20 @@ def rank_depths(image, result):
         iso_crop = isolated[y1:y2, x1:x2]
 
         # Add objects with their brightest pixel value
-        ranking.append((f'{label}_{ci}', np.max(iso_crop)))
+        ranking.append((f'{label}', np.max(iso_crop)))
 
     return sorted(ranking, key=lambda x: x[1], reverse=True)
 
 
-def to_json_results(result, sort_order, pxl_per_cm, offset_x, offset_y) -> str:
+def to_json_results(result, sort_order, pxl_per_cm, offset_x, offset_y, depth_ranking) -> str:
     '''Generate JSON string from the results of the model prediction'''
     src_json = json.loads(result.tojson())
     result = []
 
     for detected in src_json:
         box = detected['box']
+
+        depth = [x[1] for x in depth_ranking if x[0] == detected['name']][0]
 
         result.append({
             'id': detected['name'],
@@ -109,6 +109,7 @@ def to_json_results(result, sort_order, pxl_per_cm, offset_x, offset_y) -> str:
                 'x2': box['x2'] / pxl_per_cm + offset_x,
                 'y2': box['y2'] / pxl_per_cm + offset_y,
             },
+            'depth': int(depth),
             'confidence': detected['confidence'],
         })
 
