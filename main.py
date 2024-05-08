@@ -12,6 +12,52 @@ device = 'cuda' if torch.cuda.is_available() else 'mps' if config.get_bool('ALLO
 transcriber = pipeline('automatic-speech-recognition', model='openai/whisper-small')
 
 
+def rank_depths(image, result):
+    '''Rank the detected objects by depth (brightness) using the depth estimation model'''
+    pipe = pipeline(task='depth-estimation', model='LiheYoung/depth-anything-small-hf')
+    depth_img = pipe(image)['depth']
+
+    width, height = image.size
+
+    cv_img = cv.cvtColor(np.array(depth_img), cv.COLOR_RGB2BGR)
+    resized_cv_img = cv.resize(cv_img, dsize=(width, height))
+
+    ranking = []
+
+    img = np.copy(resized_cv_img)
+
+    # iterate each object contour 
+    for ci, contour in enumerate(result):
+        label = contour.names[contour.boxes.cls.tolist().pop()]
+
+        binary_mask = np.zeros(img.shape[:2], np.uint8)
+
+        # Create contour mask 
+        contour_mask = contour.masks.xy.pop().astype(np.int32).reshape(-1, 1, 2)
+        _ = cv.drawContours(binary_mask, [contour_mask], -1, (255, 255, 255), cv.FILLED)
+
+        # Choose one:
+
+        # OPTION-1: Isolate object with black background
+        mask3ch = cv.cvtColor(binary_mask, cv.COLOR_GRAY2BGR)
+        isolated = cv.bitwise_and(mask3ch, img)
+
+        # OPTION-2: Isolate object with transparent background (when saved as PNG)
+        # isolated = np.dstack([img, binary_mask])
+
+        # OPTIONAL: detection crop (from either OPT1 or OPT2)
+        x1, y1, x2, y2 = contour.boxes.xyxy.cpu().numpy().squeeze().astype(np.int32)
+        iso_crop = isolated[y1:y2, x1:x2]
+
+        # Rank the objects by brightest found pixel
+        ranking.append((f'{label}_{ci}', np.max(iso_crop)))
+
+    # Sort by brightness
+    ranking.sort(key=lambda x: x[1], reverse=True)
+
+    return ranking
+
+
 def predict(image, audio, sort_order, draw_calibration, output_warped, left_top_x, left_top_y, right_top_x, right_top_y, left_bottom_x, left_bottom_y, right_bottom_x, right_bottom_y, width, height, offset_x, offset_y):
     left_top = (left_top_x, left_top_y)
     right_top = (right_top_x, right_top_y)
@@ -35,6 +81,9 @@ def predict(image, audio, sort_order, draw_calibration, output_warped, left_top_
         pil_image = Image.fromarray(image_array[..., ::-1])
 
     json_results = to_json_results(results[0], sort_order, (pil_image.size[0] / width + pil_image.size[1] / height) / 2, offset_x, offset_y)
+
+    depth_ranking = rank_depths(image, results[0])
+    print('Depths:', depth_ranking)
 
     if config.get_bool('LOG_JSON'):
         with open('results.json', 'w') as f:
